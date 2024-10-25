@@ -1,5 +1,4 @@
 import torch 
-import numpy as np 
 from jaxtyping import Float
 
 @torch.no_grad()
@@ -12,5 +11,5 @@ def clip_score_compute(image_features: Float[torch.Tensor, "N D"],
         image_features = image_features / image_features.norm(dim=-1, keepdim=True)
         text_features = text_features / text_features.norm(dim=-1, keepdim=True)
     similarity = image_features * text_features
-    similarity = similarity.sum() * logit_scale
-    return similarity
+    similarity = similarity.sum(dim=-1) * logit_scale
+    return similarity.mean()
