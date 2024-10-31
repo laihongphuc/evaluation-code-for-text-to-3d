@@ -8,7 +8,7 @@ from timm.data.transforms_factory import create_transform
 
 class InceptionFeatureExtractor(nn.Module):
     def __init__(self,
-                 model_name="gluon_inception_v3",
+                 model_name="inception_v3.gluon_in1k",
                  pretrained=True):
         super().__init__()
         self.model = timm.create_model(model_name, pretrained=pretrained)

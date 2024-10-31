@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 from jaxtyping import Float
-from numpy.typing import NDArray
 from torch.utils.data import DataLoader
 
 from .inception import InceptionFeatureExtractor
@@ -22,7 +21,7 @@ def get_feature_extractor(metric_name, pretrained=False):
 @torch.no_grad()
 def get_static_from_dataloader(model: nn.Module,
                                dataloader: DataLoader,
-                               device: str) -> Tuple[Float[NDArray, "D"], Float[NDArray, "D D"]]:
+                               device: str) -> Tuple[Float[np.ndarray, "D"], Float[np.ndarray, "D D"]]:
     model.eval()
     model.to(device)
     total_features = []
@@ -32,7 +31,7 @@ def get_static_from_dataloader(model: nn.Module,
         total_features.append(features.cpu().numpy())
     total_features = np.concatenate(total_features, axis=0)
     mean = np.mean(total_features, axis=0)
-    cov = np.cov(total_features)
+    cov = np.cov(total_features.T)
     return mean, cov
 
 

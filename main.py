@@ -1,5 +1,4 @@
 import os
-import os.path as osp
 import random
 from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser
 
@@ -36,6 +35,14 @@ parser.add_argument('--device', type=str, default="cuda:0",
                     help='Device to use. Like cuda, cuda:0 or cpu')
 
 
+IMG_FORMAT = ["png", "jpg"]
+
+def cache_folder(folder_path):
+    for filename in os.listdir(folder_path):
+        if filename.endswith(".npz"):
+            return os.path.join(folder_path, filename)
+    return False
+
 class ImageDataset(Dataset):
     def __init__(self,
                  images_dir: str,
@@ -47,6 +54,7 @@ class ImageDataset(Dataset):
         self.images_dir = images_dir 
         # random number of images 
         images_list = [os.path.join(images_dir, name) for name in os.listdir(self.images_dir)] 
+        images_list = [path for path in images_list if path.split(".")[-1] in IMG_FORMAT]
         if number_of_images is not None:
             self.images_list = random.sample(images_list, number_of_images)
         else:
@@ -70,7 +78,7 @@ class ImageDataset(Dataset):
         else: 
             img = None 
         return img
-    
+
 
 def main():
     args = parser.parse_args()
@@ -106,7 +114,8 @@ def main():
     if args.real_image_dir is not None:
         real_dataset = ImageDataset(
             args.real_image_dir, None, 
-            transform=model.image_preprocessor
+            transform=model.image_preprocessor,
+            split_image=1
         )
     else:
         real_dataset = None
@@ -133,8 +142,16 @@ def main():
         image_features = get_feature_from_dataloader(model, generate_dataloader, device)
         score = clip_score_compute(image_features, text_features)
     elif args.metric == "fid":
-        mean_real, std_real = get_static_from_dataloader(model, real_dataloader, device)
-        mean_fake, std_fake = get_static_from_dataloader(model, generate_dataloader, device)
+        cache_fake, cache_real = cache_folder(args.generate_image_dir), cache_folder(args.real_image_dir)
+        if cache_fake is False and cache_real is False:
+            mean_real, std_real = get_static_from_dataloader(model, real_dataloader, device)
+            mean_fake, std_fake = get_static_from_dataloader(model, generate_dataloader, device)
+            np.savez(os.path.join(args.generate_image_dir, "stats.npz"), mean=mean_fake, std=std_fake)
+            np.savez(os.path.join(args.real_image_dir, "stats.npz"), mean=mean_real, std=std_real)
+        if cache_fake is not False:
+            mean_fake, std_fake = np.load(cache_fake)["mean"], np.load(cache_fake)["std"]
+        if cache_real is not False:
+            mean_real, std_real = np.load(cache_real)["mean"], np.load(cache_real)["std"]
         score = fid_from_stats(mean_real, std_real, mean_fake, std_fake)
     else:
         raise NotImplementedError(f"Don't support model {args.metric}")

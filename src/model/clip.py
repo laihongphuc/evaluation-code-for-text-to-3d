@@ -2,7 +2,6 @@ from typing import Union, List
 
 import torch
 import torch.nn as nn
-import numpy as np
 from jaxtyping import Float
 from PIL import Image
 from transformers import CLIPTokenizer, CLIPModel, CLIPImageProcessor
@@ -33,7 +32,3 @@ class ClipFeatureExtractor(nn.Module):
     
     def image_preprocessor(self, image: Image) -> Float[torch.Tensor, "C H W"]:
         return self.image_processor(image, return_tensors="pt")['pixel_values'][0]
-    
-
-
-        
