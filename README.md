@@ -2,7 +2,17 @@
 Evaluation code for text-to-3D using huggingface model weight (because my remote server can only download weight from huggingface hub) :laughing:
 
 **Note:** image rendered by method in threestudio is usually concat with depth map and alpha image. 
+# Background
+## Inception Variety
+- Link paper: [Taming Mode Collapse in Score Distillation for Text-to-3D Generation](https://arxiv.org/abs/2401.00909)
 
+The formulation of IV score 
+$$
+IV(\theta) = H[\mathbb{E}_c[p_{cls}(y|g(\theta, c))]]
+$$
+The higher IV signifies that each rendered view is likely to have a distinct label prediction, meaning the 3D creation has higher view diversity => less Janus (???)
+
+The problem with IV score is that if the rendered image is not good => the Inception backbone don't label it certainly => the entropy is high. Combining the IV and IQ score, we have IG (Information Gain) $IG=(IV - IQ)/IQ$ 
 # How to use
 ## CLIP Score
 We can compute CLIP score between text prompt and images rendered by threestudio. 
@@ -18,5 +28,6 @@ python main.py --metric "fid" --generate-image-dir <first dir> --real-image-dir 
 # TODO
 - [x] Add Clip score
 - [x] Add 3D-FID score (Inception Backbone)
-- [ ] Save `.npz` cache 
+- [x] Save `.npz` cache 
 - [ ] Add 3D-FID (Clip backbone)
+- [x] Add Inception Variety and Inception Gain to reflect the Janus problem

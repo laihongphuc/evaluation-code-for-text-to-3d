@@ -13,14 +13,16 @@ except ImportError:
     def tqdm(x):
         return x
 
-from src.model import get_feature_extractor, get_static_from_dataloader, get_feature_from_dataloader
+from src.model import get_feature_extractor, get_static_from_dataloader,\
+    get_feature_from_dataloader, get_probs_from_dataloader
 
-from src.metric import fid_from_stats, clip_score_compute
+from src.metric import fid_from_stats, clip_score_compute,\
+    inception_variety_from_probs, inception_gain_from_probs
 
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument('--metric', type=str, default='fid',
-                    choices=['fid', 'clip'], help='Metric to use')
+                    choices=['fid', 'clip', 'iv', 'ig'], help='Metric to use')
 parser.add_argument('--generate-image-dir', type=str, help='Path to inference image from 3Dstudio')
 parser.add_argument('--real-image-dir', type=str, default=None, help='Path to real images')
 parser.add_argument('--text', type=str, default=None, help='Text to generate image')
@@ -102,13 +104,16 @@ def main():
         num_workers = args.num_workers
 
     # model init
-    model = get_feature_extractor(args.metric, pretrained=True)
+    metric = args.metric 
+    if metric == "iv" or metric == "ig":
+        metric = "fid"
+    model = get_feature_extractor(metric, pretrained=True)
     model = model.to(device)
 
     # dataset init
     generate_dataset = ImageDataset(
         args.generate_image_dir, None, 
-        transform=model.image_preprocessor
+        transform=model.image_preprocessor,
     )
 
     if args.real_image_dir is not None:
@@ -153,6 +158,12 @@ def main():
         if cache_real is not False:
             mean_real, std_real = np.load(cache_real)["mean"], np.load(cache_real)["std"]
         score = fid_from_stats(mean_real, std_real, mean_fake, std_fake)
+    elif args.metric == "iv":
+        image_probs = get_probs_from_dataloader(model, generate_dataloader, device)
+        score = inception_variety_from_probs(image_probs)
+    elif args.metric == "ig":
+        image_probs = get_probs_from_dataloader(model, generate_dataloader, device)
+        score = inception_gain_from_probs(image_probs)
     else:
         raise NotImplementedError(f"Don't support model {args.metric}")
     

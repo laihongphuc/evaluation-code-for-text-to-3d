@@ -48,3 +48,18 @@ def get_feature_from_dataloader(model: nn.Module,
         total_features.append(features)
     total_features = torch.cat(total_features, dim=0)
     return total_features
+
+
+@torch.no_grad()
+def get_probs_from_dataloader(model: nn.Module,
+                               dataloader: DataLoader,
+                               device: str) -> torch.Tensor:
+    model.eval()
+    model.to(device)
+    total_probs = []
+    for img in dataloader:
+        img = img.to(device)
+        probs = model.encode_label_logits(img)
+        total_probs.append(probs.softmax(dim=1))
+    total_probs = torch.cat(total_probs, dim=0)
+    return total_probs

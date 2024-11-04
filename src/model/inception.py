@@ -22,6 +22,10 @@ class InceptionFeatureExtractor(nn.Module):
         x = self.model.global_pool(x)
         return x
     
+    @torch.no_grad()
+    def encode_label_logits(self, x: torch.Tensor) -> torch.Tensor:
+        return self.model(x)
+    
     def image_preprocessor(self, image: Image) -> torch.Tensor:
         return self.image_preprocessor(image)
     
