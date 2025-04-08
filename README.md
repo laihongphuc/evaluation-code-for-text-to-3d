@@ -94,9 +94,12 @@ fid_score = cmmd_score_helper_function(
 - Link paper: [Taming Mode Collapse in Score Distillation for Text-to-3D Generation](https://arxiv.org/abs/2401.00909)
 
 The formulation of IV score 
-$$
+```math
+\begin{equation}
 IV(\theta) = H[\mathbb{E}_c[p_{cls}(y|g(\theta, c))]]
-$$
+\end{equation}
+```
+
 The higher IV signifies that each rendered view is likely to have a distinct label prediction, meaning the 3D creation has higher view diversity => less Janus (???)
 
 The problem with IV score is that if the rendered image is not good => the Inception backbone don't label it certainly => the entropy is high. Combining the IV and IQ score, we have IG (Information Gain) $IG=(IV - IQ)/IQ$ 
