@@ -17,12 +17,12 @@ from src.model import get_feature_extractor, get_static_from_dataloader,\
     get_feature_from_dataloader, get_probs_from_dataloader
 
 from src.metric import fid_from_stats, clip_score_compute,\
-    inception_variety_from_probs, inception_gain_from_probs
+    inception_variety_from_probs, inception_gain_from_probs, mmd
 
 
 parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 parser.add_argument('--metric', type=str, default='fid',
-                    choices=['fid', 'clip', 'iv', 'ig'], help='Metric to use')
+                    choices=['fid', 'clip', 'iv', 'ig', 'cmmd'], help='Metric to use')
 parser.add_argument('--generate-image-dir', type=str, help='Path to inference image from 3Dstudio')
 parser.add_argument('--real-image-dir', type=str, default=None, help='Path to real images')
 parser.add_argument('--text', type=str, default=None, help='Text to generate image')
@@ -107,6 +107,8 @@ def main():
     metric = args.metric 
     if metric == "iv" or metric == "ig":
         metric = "fid"
+    else:
+        metric = "clip"
     model = get_feature_extractor(metric, pretrained=True)
     model = model.to(device)
 
@@ -164,6 +166,11 @@ def main():
     elif args.metric == "ig":
         image_probs = get_probs_from_dataloader(model, generate_dataloader, device)
         score = inception_gain_from_probs(image_probs)
+    elif args.metric == "cmmd":
+        generate_image_features = get_feature_from_dataloader(model, generate_dataloader, device)
+        real_image_features = get_feature_from_dataloader(model, real_dataloader, device)
+        score = mmd(generate_image_features, real_image_features)
+
     else:
         raise NotImplementedError(f"Don't support model {args.metric}")
     
