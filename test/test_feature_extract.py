@@ -2,7 +2,7 @@ import torch
 from PIL import Image 
 import numpy as np
 
-from src import get_feature_extractor
+from eval_3d import get_feature_extractor
 
 
 def test_get_feature_extractor():

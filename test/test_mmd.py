@@ -2,8 +2,8 @@ import torch
 from PIL import Image
 import numpy as np
 
-from src import get_feature_extractor
-from src.metric import mmd
+from eval_3d import get_feature_extractor
+from eval_3d.src.metric import mmd
 
 def test_mmd():
     model = get_feature_extractor("clip", pretrained=False)
